@@ -15,14 +15,27 @@ app.get('/getpush', (req, res) => {
   });
 });
 
+app.post('/setkey', (req, res) => {
+	res.setHeader('Content-Type', 'text/json');
+	// 認証情報を保存
+	const result = {};
+	result["endpoint"] = req.body.endpoint
+	result["p256dh"] = req.body.p256dh
+	result["auth"] = req.body.auth
+	result["publicKey"] = vapidKeys.publicKey;
+	result["privateKey"] = vapidKeys.privateKey;
+	fs.writeFileSync('./key.json', JSON.stringify(result));
+	return res.sendStatus(200)
+});
+
 app.post('/send/webpush', (req, res) => {
 	res.setHeader('Content-Type', 'text/json');
-	// ブラウザ側でプッシュサーバから取得した、Endpointとp256dh、authの認証情報をセットする
+	const keys = require('./key.json')
 	var pushSubscription = {
-			endpoint: req.body.endpoint,
+			endpoint: keys.endpoint,
 			keys: {
-					p256dh: req.body.p256dh,
-					auth: req.body.auth
+					p256dh: keys.p256dh,
+					auth: keys.auth
 			}
 	};
 	// 送信するメッセージは、Json形式で送る必要がある
@@ -43,14 +56,6 @@ app.post('/send/webpush', (req, res) => {
 	}
 	// npmのweb-pushライブラリを利用して、通知を送信する
 	webpush.sendNotification(pushSubscription, message, options).then((response)=>{
-		// 認証情報を保存
-		const result = {};
-		result["endpoint"] = pushSubscription.endpoint
-		result["p256dh"] = pushSubscription.keys.p256dh
-		result["auth"] = pushSubscription.keys.auth
-		result["publicKey"] = options.vapidDetails.publicKey;
-		result["privateKey"] = options.vapidDetails.privateKey;
-		fs.writeFileSync('./key.json', JSON.stringify(result));
 		return res.json({
 			statusCode: response.statusCode || -1,
 			message: response.message || '',

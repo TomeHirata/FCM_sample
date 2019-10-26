@@ -73,19 +73,20 @@ function urlBase64ToUint8Array(base64String) {
     const rawAuthSecret = sub.getKey ? sub.getKey('auth') : '';
     auth.value = rawAuthSecret ? btoa(String.fromCharCode.apply(null, new Uint8Array(rawAuthSecret))) : '';
     endpoint.value = sub.endpoint;
+    axios.post('/setkey', {
+      endpoint: endpoint.value,
+      p256dh: key.value,
+      auth: auth.value,
+    })
+    .then(() => console.log("success"))
+    .catch(() => console.log("error"))
 	}
 	
 	/**
 	 * push 通知をする
 	 */
 	function push(){
-		const endpoint = document.querySelector('#subscription-endpoint');
-		const key = document.querySelector('#subscription-public-key');
-		const auth = document.querySelector('#subscription-auth');
 		axios.post("/send/webpush", {
-				endpoint: endpoint.value,
-				p256dh: key.value,
-				auth: auth.value,
 				title: "Hi!",
 				link: 'mailto:example@yourdomain.org',
 				body: 'webpush test'
